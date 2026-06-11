@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.accompany.mapper.AccompanyCertificateMapper">
+
+    <resultMap id="CertificateVOMap" type="com.hospital.accompany.vo.CertificateVO">
+        <id column="id" property="id"/>
+        <result column="cert_no" property="certNo"/>
+        <result column="apply_id" property="applyId"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="patient_no" property="patientNo"/>
+        <result column="bed_no" property="bedNo"/>
+        <result column="ward_id" property="wardId"/>
+        <result column="ward_name" property="wardName"/>
+        <result column="person_id" property="personId"/>
+        <result column="person_name" property="personName"/>
+        <result column="id_card" property="idCard"/>
+        <result column="phone" property="phone"/>
+        <result column="relation" property="relation"/>
+        <result column="start_date" property="startDate"/>
+        <result column="end_date" property="endDate"/>
+        <result column="cert_status" property="certStatus"/>
+        <result column="issue_user_name" property="issueUserName"/>
+        <result column="issue_time" property="issueTime"/>
+        <result column="invalid_reason" property="invalidReason"/>
+        <result column="invalid_time" property="invalidTime"/>
+        <result column="invalid_operator_name" property="invalidOperatorName"/>
+        <result column="id_card_expire_date" property="idCardExpireDate"/>
+    </resultMap>
+
+    <select id="getCertificateDetailById" resultMap="CertificateVOMap">
+        SELECT
+            c.id,
+            c.cert_no,
+            c.apply_id,
+            c.patient_id,
+            p.patient_name,
+            p.patient_no,
+            p.bed_no,
+            c.ward_id,
+            w.ward_name,
+            c.person_id,
+            ap.person_name,
+            ap.id_card,
+            ap.phone,
+            ap.relation,
+            c.start_date,
+            c.end_date,
+            c.cert_status,
+            c.issue_user_name,
+            c.issue_time,
+            c.invalid_reason,
+            c.invalid_time,
+            c.invalid_operator_name,
+            ap.id_card_expire_date
+        FROM accompany_certificate c
+        LEFT JOIN patient p ON c.patient_id = p.id
+        LEFT JOIN ward w ON c.ward_id = w.id
+        LEFT JOIN accompany_person ap ON c.person_id = ap.id
+        WHERE c.deleted = 0 AND c.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="getCertificateByNo" resultMap="CertificateVOMap">
+        SELECT
+            c.id,
+            c.cert_no,
+            c.apply_id,
+            c.patient_id,
+            p.patient_name,
+            p.patient_no,
+            p.bed_no,
+            c.ward_id,
+            w.ward_name,
+            c.person_id,
+            ap.person_name,
+            ap.id_card,
+            ap.phone,
+            ap.relation,
+            c.start_date,
+            c.end_date,
+            c.cert_status,
+            c.issue_user_name,
+            c.issue_time,
+            c.invalid_reason,
+            c.invalid_time,
+            c.invalid_operator_name,
+            ap.id_card_expire_date
+        FROM accompany_certificate c
+        LEFT JOIN patient p ON c.patient_id = p.id
+        LEFT JOIN ward w ON c.ward_id = w.id
+        LEFT JOIN accompany_person ap ON c.person_id = ap.id
+        WHERE c.deleted = 0 AND c.cert_no = #{certNo}
+        ORDER BY c.issue_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectCertificatePage" resultMap="CertificateVOMap">
+        SELECT
+            c.id,
+            c.cert_no,
+            c.apply_id,
+            c.patient_id,
+            p.patient_name,
+            p.patient_no,
+            p.bed_no,
+            c.ward_id,
+            w.ward_name,
+            c.person_id,
+            ap.person_name,
+            ap.id_card,
+            ap.phone,
+            ap.relation,
+            c.start_date,
+            c.end_date,
+            c.cert_status,
+            c.issue_user_name,
+            c.issue_time,
+            c.invalid_reason,
+            c.invalid_time,
+            c.invalid_operator_name,
+            ap.id_card_expire_date
+        FROM accompany_certificate c
+        LEFT JOIN patient p ON c.patient_id = p.id
+        LEFT JOIN ward w ON c.ward_id = w.id
+        LEFT JOIN accompany_person ap ON c.person_id = ap.id
+        WHERE c.deleted = 0
+        <if test="wardId != null">
+            AND c.ward_id = #{wardId}
+        </if>
+        <if test="certStatus != null">
+            AND c.cert_status = #{certStatus}
+        </if>
+        <if test="patientName != null and patientName != ''">
+            AND p.patient_name LIKE CONCAT('%', #{patientName}, '%')
+        </if>
+        <if test="personName != null and personName != ''">
+            AND ap.person_name LIKE CONCAT('%', #{personName}, '%')
+        </if>
+        <if test="certNo != null and certNo != ''">
+            AND c.cert_no LIKE CONCAT('%', #{certNo}, '%')
+        </if>
+        ORDER BY c.issue_time DESC
+    </select>
+
+</mapper>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.accompany.mapper.GateRecordMapper">
+
+    <resultMap id="GateRecordVOMap" type="com.hospital.accompany.vo.GateRecordVO">
+        <id column="id" property="id"/>
+        <result column="record_no" property="recordNo"/>
+        <result column="cert_id" property="certId"/>
+        <result column="cert_no" property="certNo"/>
+        <result column="person_id" property="personId"/>
+        <result column="person_name" property="personName"/>
+        <result column="id_card" property="idCard"/>
+        <result column="ward_id" property="wardId"/>
+        <result column="ward_name" property="wardName"/>
+        <result column="gate_type" property="gateType"/>
+        <result column="check_result" property="checkResult"/>
+        <result column="refuse_reason" property="refuseReason"/>
+        <result column="gate_user_name" property="gateUserName"/>
+        <result column="check_time" property="checkTime"/>
+    </resultMap>
+
+    <select id="selectRecordPage" resultMap="GateRecordVOMap">
+        SELECT
+            gr.id,
+            gr.record_no,
+            gr.cert_id,
+            gr.cert_no,
+            gr.person_id,
+            gr.person_name,
+            gr.id_card,
+            gr.ward_id,
+            gr.ward_name,
+            gr.gate_type,
+            gr.check_result,
+            gr.refuse_reason,
+            gr.gate_user_name,
+            gr.check_time
+        FROM gate_record gr
+        WHERE gr.deleted = 0
+        <if test="wardId != null">
+            AND gr.ward_id = #{wardId}
+        </if>
+        <if test="gateType != null">
+            AND gr.gate_type = #{gateType}
+        </if>
+        <if test="checkResult != null">
+            AND gr.check_result = #{checkResult}
+        </if>
+        <if test="personName != null and personName != ''">
+            AND gr.person_name LIKE CONCAT('%', #{personName}, '%')
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND gr.check_time &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND gr.check_time &lt;= CONCAT(#{endDate}, ' 23:59:59')
+        </if>
+        ORDER BY gr.check_time DESC
+    </select>
+
+</mapper>

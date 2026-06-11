@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.accompany.mapper.AccompanyApplyMapper">
+
+    <resultMap id="ApplyVOMap" type="com.hospital.accompany.vo.ApplyVO">
+        <id column="id" property="id"/>
+        <result column="apply_no" property="applyNo"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="patient_no" property="patientNo"/>
+        <result column="bed_no" property="bedNo"/>
+        <result column="ward_id" property="wardId"/>
+        <result column="ward_name" property="wardName"/>
+        <result column="person_id" property="personId"/>
+        <result column="person_name" property="personName"/>
+        <result column="id_card" property="idCard"/>
+        <result column="phone" property="phone"/>
+        <result column="relation" property="relation"/>
+        <result column="apply_reason" property="applyReason"/>
+        <result column="expected_start_date" property="expectedStartDate"/>
+        <result column="expected_end_date" property="expectedEndDate"/>
+        <result column="apply_status" property="applyStatus"/>
+        <result column="audit_user_name" property="auditUserName"/>
+        <result column="audit_time" property="auditTime"/>
+        <result column="audit_remark" property="auditRemark"/>
+        <result column="invalid_reason" property="invalidReason"/>
+        <result column="invalid_time" property="invalidTime"/>
+        <result column="apply_time" property="applyTime"/>
+    </resultMap>
+
+    <select id="getApplyDetailById" resultMap="ApplyVOMap">
+        SELECT
+            a.id,
+            a.apply_no,
+            a.patient_id,
+            p.patient_name,
+            p.patient_no,
+            p.bed_no,
+            a.ward_id,
+            w.ward_name,
+            a.person_id,
+            ap.person_name,
+            ap.id_card,
+            ap.phone,
+            ap.relation,
+            a.apply_reason,
+            a.expected_start_date,
+            a.expected_end_date,
+            a.apply_status,
+            a.audit_user_name,
+            a.audit_time,
+            a.audit_remark,
+            a.invalid_reason,
+            a.invalid_time,
+            a.apply_time
+        FROM accompany_apply a
+        LEFT JOIN patient p ON a.patient_id = p.id
+        LEFT JOIN ward w ON a.ward_id = w.id
+        LEFT JOIN accompany_person ap ON a.person_id = ap.id
+        WHERE a.deleted = 0 AND a.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectApplyPage" resultMap="ApplyVOMap">
+        SELECT
+            a.id,
+            a.apply_no,
+            a.patient_id,
+            p.patient_name,
+            p.patient_no,
+            p.bed_no,
+            a.ward_id,
+            w.ward_name,
+            a.person_id,
+            ap.person_name,
+            ap.id_card,
+            ap.phone,
+            ap.relation,
+            a.apply_reason,
+            a.expected_start_date,
+            a.expected_end_date,
+            a.apply_status,
+            a.audit_user_name,
+            a.audit_time,
+            a.audit_remark,
+            a.invalid_reason,
+            a.invalid_time,
+            a.apply_time
+        FROM accompany_apply a
+        LEFT JOIN patient p ON a.patient_id = p.id
+        LEFT JOIN ward w ON a.ward_id = w.id
+        LEFT JOIN accompany_person ap ON a.person_id = ap.id
+        WHERE a.deleted = 0
+        <if test="wardId != null">
+            AND a.ward_id = #{wardId}
+        </if>
+        <if test="applyStatus != null">
+            AND a.apply_status = #{applyStatus}
+        </if>
+        <if test="patientName != null and patientName != ''">
+            AND p.patient_name LIKE CONCAT('%', #{patientName}, '%')
+        </if>
+        <if test="personName != null and personName != ''">
+            AND ap.person_name LIKE CONCAT('%', #{personName}, '%')
+        </if>
+        ORDER BY a.apply_time DESC
+    </select>
+
+</mapper>
