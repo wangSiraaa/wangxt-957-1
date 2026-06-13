@@ -3,6 +3,7 @@ package com.hospital.accompany.service.impl;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hospital.accompany.common.BusinessException;
 import com.hospital.accompany.common.PageResult;
@@ -138,7 +139,7 @@ public class GateServiceImpl implements GateService {
                                                    Integer gateType, Integer checkResult,
                                                    String personName, String startDate, String endDate) {
         Page<GateRecordVO> page = new Page<>(current, size);
-        Page<GateRecordVO> result = gateRecordMapper.selectRecordPage(page, wardId, gateType,
+        IPage<GateRecordVO> result = gateRecordMapper.selectRecordPage(page, wardId, gateType,
                 checkResult, personName, startDate, endDate);
         return new PageResult<>(result.getTotal(), result.getRecords(), result.getCurrent(), result.getSize());
     }

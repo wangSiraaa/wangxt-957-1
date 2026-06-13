@@ -2,6 +2,7 @@ package com.hospital.accompany.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hospital.accompany.common.BusinessException;
 import com.hospital.accompany.common.PageResult;
@@ -89,7 +90,7 @@ public class AuditServiceImpl implements AuditService {
     public PageResult<ApplyVO> getPendingList(Long current, Long size, Long wardId,
                                                String patientName, String personName) {
         Page<ApplyVO> page = new Page<>(current, size);
-        Page<ApplyVO> result = applyMapper.selectApplyPage(page, wardId, 0, patientName, personName);
+        IPage<ApplyVO> result = applyMapper.selectApplyPage(page, wardId, 0, patientName, personName);
         return new PageResult<>(result.getTotal(), result.getRecords(), result.getCurrent(), result.getSize());
     }
 

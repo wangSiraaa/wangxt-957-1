@@ -1,5 +1,6 @@
 package com.hospital.accompany.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hospital.accompany.common.PageResult;
 import com.hospital.accompany.common.Result;
@@ -28,7 +29,7 @@ public class PatientController {
             @ApiParam("患者姓名") @RequestParam(required = false) String patientName,
             @ApiParam("住院号") @RequestParam(required = false) String patientNo) {
         Page<Patient> page = new Page<>(current, size);
-        Page<Patient> result = patientMapper.selectPatientPage(page, wardId, patientName, patientNo);
+        IPage<Patient> result = patientMapper.selectPatientPage(page, wardId, patientName, patientNo);
         PageResult<Patient> pageResult = new PageResult<>(result.getTotal(), result.getRecords(),
                 result.getCurrent(), result.getSize());
         return Result.success(pageResult);

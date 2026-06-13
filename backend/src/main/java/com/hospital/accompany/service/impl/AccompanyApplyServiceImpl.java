@@ -3,6 +3,7 @@ package com.hospital.accompany.service.impl;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hospital.accompany.common.BusinessException;
@@ -116,7 +117,7 @@ public class AccompanyApplyServiceImpl extends ServiceImpl<AccompanyApplyMapper,
                                              Integer applyStatus, String patientName,
                                              String personName) {
         Page<ApplyVO> page = new Page<>(current, size);
-        Page<ApplyVO> result = baseMapper.selectApplyPage(page, wardId, applyStatus, patientName, personName);
+        IPage<ApplyVO> result = baseMapper.selectApplyPage(page, wardId, applyStatus, patientName, personName);
         return new PageResult<>(result.getTotal(), result.getRecords(), result.getCurrent(), result.getSize());
     }
 }

@@ -1,6 +1,7 @@
 package com.hospital.accompany.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hospital.accompany.common.BusinessException;
 import com.hospital.accompany.common.PageResult;
@@ -41,7 +42,7 @@ public class CertificateServiceImpl implements CertificateService {
                                                          Integer certStatus, String patientName,
                                                          String personName, String certNo) {
         Page<CertificateVO> page = new Page<>(current, size);
-        Page<CertificateVO> result = certificateMapper.selectCertificatePage(page, wardId, certStatus,
+        IPage<CertificateVO> result = certificateMapper.selectCertificatePage(page, wardId, certStatus,
                 patientName, personName, certNo);
         return new PageResult<>(result.getTotal(), result.getRecords(), result.getCurrent(), result.getSize());
     }
