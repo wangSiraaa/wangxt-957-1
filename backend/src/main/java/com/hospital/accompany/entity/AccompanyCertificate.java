@@ -26,11 +26,17 @@ public class AccompanyCertificate implements Serializable {
 
     private Long personId;
 
+    private Integer certType;
+
+    private Long specialApprovalId;
+
     private LocalDate startDate;
 
     private LocalDate endDate;
 
     private Integer certStatus;
+
+    private Long currentLeaveId;
 
     private Long issueUserId;
 

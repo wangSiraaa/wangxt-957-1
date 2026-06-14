@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.accompany.mapper.CertTransferRecordMapper">
+
+    <resultMap id="CertTransferRecordVOMap" type="com.hospital.accompany.vo.CertTransferRecordVO">
+        <id column="id" property="id"/>
+        <result column="transfer_no" property="transferNo"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="ward_id" property="wardId"/>
+        <result column="ward_name" property="wardName"/>
+        <result column="old_cert_id" property="oldCertId"/>
+        <result column="old_cert_no" property="oldCertNo"/>
+        <result column="old_person_id" property="oldPersonId"/>
+        <result column="old_person_name" property="oldPersonName"/>
+        <result column="new_cert_id" property="newCertId"/>
+        <result column="new_cert_no" property="newCertNo"/>
+        <result column="new_person_id" property="newPersonId"/>
+        <result column="new_person_name" property="newPersonName"/>
+        <result column="handover_reason" property="handoverReason"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="transfer_time" property="transferTime"/>
+        <result column="new_apply_status" property="newApplyStatus"/>
+        <result column="new_audit_user_name" property="newAuditUserName"/>
+        <result column="new_audit_time" property="newAuditTime"/>
+        <result column="new_audit_remark" property="newAuditRemark"/>
+    </resultMap>
+
+    <select id="selectTransferPage" resultMap="CertTransferRecordVOMap">
+        SELECT
+            t.id,
+            t.transfer_no,
+            t.patient_id,
+            p.patient_name,
+            t.ward_id,
+            w.ward_name,
+            t.old_cert_id,
+            t.old_cert_no,
+            t.old_person_id,
+            t.old_person_name,
+            t.new_cert_id,
+            t.new_cert_no,
+            t.new_person_id,
+            t.new_person_name,
+            t.handover_reason,
+            t.operator_id,
+            t.operator_name,
+            t.transfer_time,
+            t.new_apply_status,
+            t.new_audit_user_name,
+            t.new_audit_time,
+            t.new_audit_remark
+        FROM cert_transfer_record t
+        LEFT JOIN patient p ON t.patient_id = p.id
+        LEFT JOIN ward w ON t.ward_id = w.id
+        WHERE t.deleted = 0
+        <if test="patientId != null">
+            AND t.patient_id = #{patientId}
+        </if>
+        <if test="wardId != null">
+            AND t.ward_id = #{wardId}
+        </if>
+        <if test="oldPersonName != null and oldPersonName != ''">
+            AND t.old_person_name LIKE CONCAT('%', #{oldPersonName}, '%')
+        </if>
+        <if test="newPersonName != null and newPersonName != ''">
+            AND t.new_person_name LIKE CONCAT('%', #{newPersonName}, '%')
+        </if>
+        ORDER BY t.transfer_time DESC
+    </select>
+
+    <select id="getTransferDetailById" resultMap="CertTransferRecordVOMap">
+        SELECT
+            t.id,
+            t.transfer_no,
+            t.patient_id,
+            p.patient_name,
+            t.ward_id,
+            w.ward_name,
+            t.old_cert_id,
+            t.old_cert_no,
+            t.old_person_id,
+            t.old_person_name,
+            t.new_cert_id,
+            t.new_cert_no,
+            t.new_person_id,
+            t.new_person_name,
+            t.handover_reason,
+            t.operator_id,
+            t.operator_name,
+            t.transfer_time,
+            t.new_apply_status,
+            t.new_audit_user_name,
+            t.new_audit_time,
+            t.new_audit_remark
+        FROM cert_transfer_record t
+        LEFT JOIN patient p ON t.patient_id = p.id
+        LEFT JOIN ward w ON t.ward_id = w.id
+        WHERE t.deleted = 0 AND t.id = #{id}
+        LIMIT 1
+    </select>
+
+</mapper>

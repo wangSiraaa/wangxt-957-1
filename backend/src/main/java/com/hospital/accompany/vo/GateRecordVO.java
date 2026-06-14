@@ -37,4 +37,6 @@ public class GateRecordVO implements Serializable {
     private String gateUserName;
 
     private LocalDateTime checkTime;
+
+    private CertificateVO certInfo;
 }

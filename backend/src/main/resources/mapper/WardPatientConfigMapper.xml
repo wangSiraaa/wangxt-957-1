@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.accompany.mapper.WardPatientConfigMapper">
+
+    <resultMap id="WardPatientConfigVOMap" type="com.hospital.accompany.vo.WardPatientConfigVO">
+        <id column="id" property="id"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="patient_no" property="patientNo"/>
+        <result column="bed_no" property="bedNo"/>
+        <result column="ward_id" property="wardId"/>
+        <result column="ward_name" property="wardName"/>
+        <result column="max_accompany_count" property="maxAccompanyCount"/>
+        <result column="adjust_reason" property="adjustReason"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectConfigPage" resultMap="WardPatientConfigVOMap">
+        SELECT
+            wpc.id,
+            wpc.patient_id,
+            wpc.patient_name,
+            p.patient_no,
+            p.bed_no,
+            wpc.ward_id,
+            wpc.ward_name,
+            wpc.max_accompany_count,
+            wpc.adjust_reason,
+            wpc.operator_id,
+            wpc.operator_name,
+            wpc.create_time,
+            wpc.update_time
+        FROM ward_patient_config wpc
+        LEFT JOIN patient p ON wpc.patient_id = p.id
+        WHERE wpc.deleted = 0
+        <if test="wardId != null">
+            AND wpc.ward_id = #{wardId}
+        </if>
+        <if test="patientName != null and patientName != ''">
+            AND wpc.patient_name LIKE CONCAT('%', #{patientName}, '%')
+        </if>
+        ORDER BY wpc.update_time DESC
+    </select>
+
+    <select id="getConfigByPatientId" resultMap="WardPatientConfigVOMap">
+        SELECT
+            wpc.id,
+            wpc.patient_id,
+            wpc.patient_name,
+            p.patient_no,
+            p.bed_no,
+            wpc.ward_id,
+            wpc.ward_name,
+            wpc.max_accompany_count,
+            wpc.adjust_reason,
+            wpc.operator_id,
+            wpc.operator_name,
+            wpc.create_time,
+            wpc.update_time
+        FROM ward_patient_config wpc
+        LEFT JOIN patient p ON wpc.patient_id = p.id
+        WHERE wpc.deleted = 0 AND wpc.patient_id = #{patientId}
+        LIMIT 1
+    </select>
+
+</mapper>

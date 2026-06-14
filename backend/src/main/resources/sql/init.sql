@@ -69,6 +69,10 @@ CREATE TABLE `accompany_apply` (
   `patient_id` bigint NOT NULL COMMENT '患者ID',
   `ward_id` bigint NOT NULL COMMENT '病区ID',
   `person_id` bigint NOT NULL COMMENT '陪护人员ID',
+  `apply_type` tinyint NOT NULL DEFAULT 1 COMMENT '申请类型(1-普通申请 2-换陪护申请 3-特殊审批申请)',
+  `source_cert_id` bigint DEFAULT NULL COMMENT '来源陪护证ID(换陪护用)',
+  `transfer_record_id` bigint DEFAULT NULL COMMENT '换陪护记录ID',
+  `special_approval_id` bigint DEFAULT NULL COMMENT '特殊审批ID',
   `apply_reason` varchar(255) DEFAULT NULL COMMENT '申请理由',
   `expected_start_date` date NOT NULL COMMENT '预计开始日期',
   `expected_end_date` date NOT NULL COMMENT '预计结束日期',
@@ -88,7 +92,8 @@ CREATE TABLE `accompany_apply` (
   KEY `idx_patient_id` (`patient_id`),
   KEY `idx_ward_id` (`ward_id`),
   KEY `idx_person_id` (`person_id`),
-  KEY `idx_apply_status` (`apply_status`)
+  KEY `idx_apply_status` (`apply_status`),
+  KEY `idx_apply_type` (`apply_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='陪护申请表';
 
 -- 陪护证表
@@ -100,9 +105,12 @@ CREATE TABLE `accompany_certificate` (
   `patient_id` bigint NOT NULL COMMENT '患者ID',
   `ward_id` bigint NOT NULL COMMENT '病区ID',
   `person_id` bigint NOT NULL COMMENT '陪护人员ID',
+  `cert_type` tinyint NOT NULL DEFAULT 1 COMMENT '证件类型(1-普通陪护证 2-特殊审批陪护证)',
+  `special_approval_id` bigint DEFAULT NULL COMMENT '特殊审批ID',
   `start_date` date NOT NULL COMMENT '有效开始日期',
   `end_date` date NOT NULL COMMENT '有效结束日期',
-  `cert_status` tinyint NOT NULL DEFAULT 1 COMMENT '证件状态(0-已失效 1-有效)',
+  `cert_status` tinyint NOT NULL DEFAULT 1 COMMENT '证件状态(0-已失效 1-有效 2-临时离院)',
+  `current_leave_id` bigint DEFAULT NULL COMMENT '当前离院记录ID',
   `issue_user_id` bigint DEFAULT NULL COMMENT '发证人员ID',
   `issue_user_name` varchar(32) DEFAULT NULL COMMENT '发证人员姓名',
   `issue_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发证时间',
@@ -118,8 +126,152 @@ CREATE TABLE `accompany_certificate` (
   KEY `idx_apply_id` (`apply_id`),
   KEY `idx_patient_id` (`patient_id`),
   KEY `idx_person_id` (`person_id`),
-  KEY `idx_cert_status` (`cert_status`)
+  KEY `idx_cert_status` (`cert_status`),
+  KEY `idx_ward_id` (`ward_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='陪护证表';
+
+-- 换陪护记录表
+DROP TABLE IF EXISTS `cert_transfer_record`;
+CREATE TABLE `cert_transfer_record` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `transfer_no` varchar(32) NOT NULL COMMENT '交接单号',
+  `patient_id` bigint NOT NULL COMMENT '患者ID',
+  `ward_id` bigint NOT NULL COMMENT '病区ID',
+  `old_cert_id` bigint DEFAULT NULL COMMENT '原陪护证ID',
+  `old_cert_no` varchar(32) DEFAULT NULL COMMENT '原陪护证编号',
+  `old_person_id` bigint NOT NULL COMMENT '原陪护人员ID',
+  `old_person_name` varchar(32) NOT NULL COMMENT '原陪护人员姓名',
+  `new_apply_id` bigint DEFAULT NULL COMMENT '新申请ID',
+  `new_cert_id` bigint DEFAULT NULL COMMENT '新陪护证ID',
+  `new_cert_no` varchar(32) DEFAULT NULL COMMENT '新陪护证编号',
+  `new_person_id` bigint NOT NULL COMMENT '新陪护人员ID',
+  `new_person_name` varchar(32) NOT NULL COMMENT '新陪护人员姓名',
+  `handover_reason` varchar(500) NOT NULL COMMENT '交接原因',
+  `operator_id` bigint DEFAULT NULL COMMENT '操作人ID',
+  `operator_name` varchar(32) DEFAULT NULL COMMENT '操作人姓名',
+  `transfer_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '交接时间',
+  `new_apply_status` tinyint NOT NULL DEFAULT 0 COMMENT '新申请状态(0-待审核 1-审核通过 2-审核拒绝)',
+  `new_audit_user_id` bigint DEFAULT NULL COMMENT '新审核人ID',
+  `new_audit_user_name` varchar(32) DEFAULT NULL COMMENT '新审核人姓名',
+  `new_audit_time` datetime DEFAULT NULL COMMENT '新审核时间',
+  `new_audit_remark` varchar(255) DEFAULT NULL COMMENT '新审核意见',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删 1-已删)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_transfer_no` (`transfer_no`),
+  KEY `idx_patient_id` (`patient_id`),
+  KEY `idx_old_cert_id` (`old_cert_id`),
+  KEY `idx_new_cert_id` (`new_cert_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='换陪护记录表';
+
+-- 临时离院记录表
+DROP TABLE IF EXISTS `cert_leave_record`;
+CREATE TABLE `cert_leave_record` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `leave_no` varchar(32) NOT NULL COMMENT '离院单号',
+  `cert_id` bigint NOT NULL COMMENT '陪护证ID',
+  `cert_no` varchar(32) NOT NULL COMMENT '陪护证编号',
+  `patient_id` bigint NOT NULL COMMENT '患者ID',
+  `ward_id` bigint NOT NULL COMMENT '病区ID',
+  `person_id` bigint NOT NULL COMMENT '陪护人员ID',
+  `person_name` varchar(32) NOT NULL COMMENT '陪护人员姓名',
+  `leave_type` tinyint NOT NULL DEFAULT 1 COMMENT '离院类型(1-临时离院 2-超时未归失效)',
+  `leave_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '离院时间',
+  `expected_return_time` datetime DEFAULT NULL COMMENT '预计返回时间',
+  `actual_return_time` datetime DEFAULT NULL COMMENT '实际返回时间',
+  `leave_status` tinyint NOT NULL DEFAULT 1 COMMENT '离院状态(1-离院中 2-已返回 3-已失效)',
+  `invalid_reason` varchar(255) DEFAULT NULL COMMENT '失效原因',
+  `invalid_time` datetime DEFAULT NULL COMMENT '失效时间',
+  `operator_id` bigint DEFAULT NULL COMMENT '操作人ID',
+  `operator_name` varchar(32) DEFAULT NULL COMMENT '操作人姓名',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删 1-已删)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_leave_no` (`leave_no`),
+  KEY `idx_cert_id` (`cert_id`),
+  KEY `idx_patient_id` (`patient_id`),
+  KEY `idx_leave_status` (`leave_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='临时离院记录表';
+
+-- 隔离病区特殊审批表
+DROP TABLE IF EXISTS `special_approval`;
+CREATE TABLE `special_approval` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `approval_no` varchar(32) NOT NULL COMMENT '审批单号',
+  `patient_id` bigint NOT NULL COMMENT '患者ID',
+  `patient_name` varchar(32) NOT NULL COMMENT '患者姓名',
+  `ward_id` bigint NOT NULL COMMENT '病区ID',
+  `ward_name` varchar(64) NOT NULL COMMENT '病区名称',
+  `person_id` bigint NOT NULL COMMENT '陪护人员ID',
+  `person_name` varchar(32) NOT NULL COMMENT '陪护人员姓名',
+  `id_card` varchar(18) NOT NULL COMMENT '身份证号',
+  `approval_reason` varchar(500) NOT NULL COMMENT '审批原因',
+  `start_date` date NOT NULL COMMENT '陪护开始日期',
+  `end_date` date NOT NULL COMMENT '陪护结束日期',
+  `approval_status` tinyint NOT NULL DEFAULT 0 COMMENT '审批状态(0-待审核 1-审核通过 2-审核拒绝)',
+  `apply_user_id` bigint DEFAULT NULL COMMENT '申请人ID',
+  `apply_user_name` varchar(32) DEFAULT NULL COMMENT '申请人姓名',
+  `apply_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
+  `audit_user_id` bigint DEFAULT NULL COMMENT '审核人ID',
+  `audit_user_name` varchar(32) DEFAULT NULL COMMENT '审核人姓名',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `audit_remark` varchar(255) DEFAULT NULL COMMENT '审核意见',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删 1-已删)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_approval_no` (`approval_no`),
+  KEY `idx_patient_id` (`patient_id`),
+  KEY `idx_approval_status` (`approval_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='隔离病区特殊审批表';
+
+-- 患者陪护配置表
+DROP TABLE IF EXISTS `ward_patient_config`;
+CREATE TABLE `ward_patient_config` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `patient_id` bigint NOT NULL COMMENT '患者ID',
+  `patient_name` varchar(32) NOT NULL COMMENT '患者姓名',
+  `ward_id` bigint NOT NULL COMMENT '病区ID',
+  `ward_name` varchar(64) NOT NULL COMMENT '病区名称',
+  `max_accompany_count` int NOT NULL DEFAULT 1 COMMENT '最大陪护人数',
+  `adjust_reason` varchar(500) DEFAULT NULL COMMENT '调整原因',
+  `operator_id` bigint DEFAULT NULL COMMENT '操作人ID',
+  `operator_name` varchar(32) DEFAULT NULL COMMENT '操作人姓名',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删 1-已删)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_patient_id` (`patient_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='患者陪护配置表';
+
+-- 患者转病区记录表
+DROP TABLE IF EXISTS `patient_transfer_record`;
+CREATE TABLE `patient_transfer_record` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `transfer_no` varchar(32) NOT NULL COMMENT '转病区单号',
+  `patient_id` bigint NOT NULL COMMENT '患者ID',
+  `patient_name` varchar(32) NOT NULL COMMENT '患者姓名',
+  `from_ward_id` bigint NOT NULL COMMENT '原病区ID',
+  `from_ward_name` varchar(64) NOT NULL COMMENT '原病区名称',
+  `from_bed_no` varchar(32) DEFAULT NULL COMMENT '原床号',
+  `to_ward_id` bigint NOT NULL COMMENT '目标病区ID',
+  `to_ward_name` varchar(64) NOT NULL COMMENT '目标病区名称',
+  `to_bed_no` varchar(32) DEFAULT NULL COMMENT '新床号',
+  `operator_id` bigint DEFAULT NULL COMMENT '操作人ID',
+  `operator_name` varchar(32) DEFAULT NULL COMMENT '操作人姓名',
+  `transfer_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '转病区时间',
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除(0-未删 1-已删)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_transfer_no` (`transfer_no`),
+  KEY `idx_patient_id` (`patient_id`),
+  KEY `idx_from_ward_id` (`from_ward_id`),
+  KEY `idx_to_ward_id` (`to_ward_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='患者转病区记录表';
 
 -- 门禁出入记录表
 DROP TABLE IF EXISTS `gate_record`;

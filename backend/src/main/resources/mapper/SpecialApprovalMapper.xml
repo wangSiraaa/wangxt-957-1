@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.accompany.mapper.SpecialApprovalMapper">
+
+    <resultMap id="SpecialApprovalVOMap" type="com.hospital.accompany.vo.SpecialApprovalVO">
+        <id column="id" property="id"/>
+        <result column="approval_no" property="approvalNo"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="patient_no" property="patientNo"/>
+        <result column="bed_no" property="bedNo"/>
+        <result column="ward_id" property="wardId"/>
+        <result column="ward_name" property="wardName"/>
+        <result column="person_id" property="personId"/>
+        <result column="person_name" property="personName"/>
+        <result column="id_card" property="idCard"/>
+        <result column="phone" property="phone"/>
+        <result column="relation" property="relation"/>
+        <result column="approval_reason" property="approvalReason"/>
+        <result column="start_date" property="startDate"/>
+        <result column="end_date" property="endDate"/>
+        <result column="approval_status" property="approvalStatus"/>
+        <result column="apply_user_id" property="applyUserId"/>
+        <result column="apply_user_name" property="applyUserName"/>
+        <result column="apply_time" property="applyTime"/>
+        <result column="audit_user_id" property="auditUserId"/>
+        <result column="audit_user_name" property="auditUserName"/>
+        <result column="audit_time" property="auditTime"/>
+        <result column="audit_remark" property="auditRemark"/>
+    </resultMap>
+
+    <select id="selectApprovalPage" resultMap="SpecialApprovalVOMap">
+        SELECT
+            sa.id,
+            sa.approval_no,
+            sa.patient_id,
+            sa.patient_name,
+            p.patient_no,
+            p.bed_no,
+            sa.ward_id,
+            sa.ward_name,
+            sa.person_id,
+            sa.person_name,
+            sa.id_card,
+            ap.phone,
+            ap.relation,
+            sa.approval_reason,
+            sa.start_date,
+            sa.end_date,
+            sa.approval_status,
+            sa.apply_user_id,
+            sa.apply_user_name,
+            sa.apply_time,
+            sa.audit_user_id,
+            sa.audit_user_name,
+            sa.audit_time,
+            sa.audit_remark
+        FROM special_approval sa
+        LEFT JOIN patient p ON sa.patient_id = p.id
+        LEFT JOIN accompany_person ap ON sa.person_id = ap.id
+        WHERE sa.deleted = 0
+        <if test="wardId != null">
+            AND sa.ward_id = #{wardId}
+        </if>
+        <if test="approvalStatus != null">
+            AND sa.approval_status = #{approvalStatus}
+        </if>
+        <if test="patientName != null and patientName != ''">
+            AND sa.patient_name LIKE CONCAT('%', #{patientName}, '%')
+        </if>
+        <if test="personName != null and personName != ''">
+            AND sa.person_name LIKE CONCAT('%', #{personName}, '%')
+        </if>
+        ORDER BY sa.apply_time DESC
+    </select>
+
+    <select id="getApprovalDetailById" resultMap="SpecialApprovalVOMap">
+        SELECT
+            sa.id,
+            sa.approval_no,
+            sa.patient_id,
+            sa.patient_name,
+            p.patient_no,
+            p.bed_no,
+            sa.ward_id,
+            sa.ward_name,
+            sa.person_id,
+            sa.person_name,
+            sa.id_card,
+            ap.phone,
+            ap.relation,
+            sa.approval_reason,
+            sa.start_date,
+            sa.end_date,
+            sa.approval_status,
+            sa.apply_user_id,
+            sa.apply_user_name,
+            sa.apply_time,
+            sa.audit_user_id,
+            sa.audit_user_name,
+            sa.audit_time,
+            sa.audit_remark
+        FROM special_approval sa
+        LEFT JOIN patient p ON sa.patient_id = p.id
+        LEFT JOIN accompany_person ap ON sa.person_id = ap.id
+        WHERE sa.deleted = 0 AND sa.id = #{id}
+        LIMIT 1
+    </select>
+
+</mapper>

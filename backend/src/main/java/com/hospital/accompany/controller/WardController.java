@@ -4,14 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.hospital.accompany.common.Result;
 import com.hospital.accompany.entity.Ward;
 import com.hospital.accompany.mapper.WardMapper;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Api(tags = "病区管理")
+@Tag(name = "病区管理")
 @RestController
 @RequestMapping("/ward")
 public class WardController {
@@ -19,7 +19,7 @@ public class WardController {
     @Autowired
     private WardMapper wardMapper;
 
-    @ApiOperation("获取所有病区列表")
+    @Operation(summary = "获取所有病区列表")
     @GetMapping("/list")
     public Result<List<Ward>> getWardList() {
         LambdaQueryWrapper<Ward> wrapper = new LambdaQueryWrapper<>();
@@ -29,7 +29,7 @@ public class WardController {
         return Result.success(list);
     }
 
-    @ApiOperation("获取病区详情")
+    @Operation(summary = "获取病区详情")
     @GetMapping("/{id}")
     public Result<Ward> getWardDetail(@PathVariable Long id) {
         Ward ward = wardMapper.selectById(id);

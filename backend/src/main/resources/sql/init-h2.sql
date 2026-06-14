@@ -60,6 +60,10 @@ CREATE TABLE accompany_apply (
   patient_id BIGINT NOT NULL,
   ward_id BIGINT NOT NULL,
   person_id BIGINT NOT NULL,
+  apply_type TINYINT NOT NULL DEFAULT 1,
+  source_cert_id BIGINT DEFAULT NULL,
+  transfer_record_id BIGINT DEFAULT NULL,
+  special_approval_id BIGINT DEFAULT NULL,
   apply_reason VARCHAR(255) DEFAULT NULL,
   expected_start_date DATE NOT NULL,
   expected_end_date DATE NOT NULL,
@@ -77,7 +81,7 @@ CREATE TABLE accompany_apply (
   UNIQUE (apply_no)
 );
 
--- 陪护证表
+-- 陪护证表 - 扩展字段
 DROP TABLE IF EXISTS accompany_certificate;
 CREATE TABLE accompany_certificate (
   id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -86,9 +90,12 @@ CREATE TABLE accompany_certificate (
   patient_id BIGINT NOT NULL,
   ward_id BIGINT NOT NULL,
   person_id BIGINT NOT NULL,
+  cert_type TINYINT NOT NULL DEFAULT 1,
+  special_approval_id BIGINT DEFAULT NULL,
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   cert_status TINYINT NOT NULL DEFAULT 1,
+  current_leave_id BIGINT DEFAULT NULL,
   issue_user_id BIGINT DEFAULT NULL,
   issue_user_name VARCHAR(32) DEFAULT NULL,
   issue_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -100,6 +107,133 @@ CREATE TABLE accompany_certificate (
   update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   deleted TINYINT NOT NULL DEFAULT 0,
   UNIQUE (cert_no)
+);
+
+-- 换陪护记录表
+DROP TABLE IF EXISTS cert_transfer_record;
+CREATE TABLE cert_transfer_record (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  transfer_no VARCHAR(32) NOT NULL,
+  patient_id BIGINT NOT NULL,
+  ward_id BIGINT NOT NULL,
+  old_cert_id BIGINT DEFAULT NULL,
+  old_cert_no VARCHAR(32) DEFAULT NULL,
+  old_person_id BIGINT NOT NULL,
+  old_person_name VARCHAR(32) NOT NULL,
+  new_apply_id BIGINT DEFAULT NULL,
+  new_cert_id BIGINT DEFAULT NULL,
+  new_cert_no VARCHAR(32) DEFAULT NULL,
+  new_person_id BIGINT NOT NULL,
+  new_person_name VARCHAR(32) NOT NULL,
+  handover_reason VARCHAR(500) NOT NULL,
+  operator_id BIGINT DEFAULT NULL,
+  operator_name VARCHAR(32) DEFAULT NULL,
+  transfer_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  new_apply_status TINYINT NOT NULL DEFAULT 0,
+  new_audit_user_id BIGINT DEFAULT NULL,
+  new_audit_user_name VARCHAR(32) DEFAULT NULL,
+  new_audit_time TIMESTAMP DEFAULT NULL,
+  new_audit_remark VARCHAR(255) DEFAULT NULL,
+  create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  UNIQUE (transfer_no)
+);
+
+-- 临时离院记录表
+DROP TABLE IF EXISTS cert_leave_record;
+CREATE TABLE cert_leave_record (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  leave_no VARCHAR(32) NOT NULL,
+  cert_id BIGINT NOT NULL,
+  cert_no VARCHAR(32) NOT NULL,
+  patient_id BIGINT NOT NULL,
+  ward_id BIGINT NOT NULL,
+  person_id BIGINT NOT NULL,
+  person_name VARCHAR(32) NOT NULL,
+  leave_type TINYINT NOT NULL DEFAULT 1,
+  leave_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expected_return_time TIMESTAMP DEFAULT NULL,
+  actual_return_time TIMESTAMP DEFAULT NULL,
+  leave_status TINYINT NOT NULL DEFAULT 1,
+  invalid_reason VARCHAR(255) DEFAULT NULL,
+  invalid_time TIMESTAMP DEFAULT NULL,
+  operator_id BIGINT DEFAULT NULL,
+  operator_name VARCHAR(32) DEFAULT NULL,
+  create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  UNIQUE (leave_no)
+);
+
+-- 隔离病区特殊审批表
+DROP TABLE IF EXISTS special_approval;
+CREATE TABLE special_approval (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  approval_no VARCHAR(32) NOT NULL,
+  patient_id BIGINT NOT NULL,
+  patient_name VARCHAR(32) NOT NULL,
+  ward_id BIGINT NOT NULL,
+  ward_name VARCHAR(64) NOT NULL,
+  person_id BIGINT NOT NULL,
+  person_name VARCHAR(32) NOT NULL,
+  id_card VARCHAR(18) NOT NULL,
+  approval_reason VARCHAR(500) NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  approval_status TINYINT NOT NULL DEFAULT 0,
+  apply_user_id BIGINT DEFAULT NULL,
+  apply_user_name VARCHAR(32) DEFAULT NULL,
+  apply_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  audit_user_id BIGINT DEFAULT NULL,
+  audit_user_name VARCHAR(32) DEFAULT NULL,
+  audit_time TIMESTAMP DEFAULT NULL,
+  audit_remark VARCHAR(255) DEFAULT NULL,
+  create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  UNIQUE (approval_no)
+);
+
+-- 患者陪护配置表
+DROP TABLE IF EXISTS ward_patient_config;
+CREATE TABLE ward_patient_config (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  patient_id BIGINT NOT NULL,
+  patient_name VARCHAR(32) NOT NULL,
+  ward_id BIGINT NOT NULL,
+  ward_name VARCHAR(64) NOT NULL,
+  max_accompany_count INT NOT NULL DEFAULT 1,
+  adjust_reason VARCHAR(500) DEFAULT NULL,
+  operator_id BIGINT DEFAULT NULL,
+  operator_name VARCHAR(32) DEFAULT NULL,
+  create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  UNIQUE (patient_id)
+);
+
+-- 患者转病区记录表
+DROP TABLE IF EXISTS patient_transfer_record;
+CREATE TABLE patient_transfer_record (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  transfer_no VARCHAR(32) NOT NULL,
+  patient_id BIGINT NOT NULL,
+  patient_name VARCHAR(32) NOT NULL,
+  from_ward_id BIGINT NOT NULL,
+  from_ward_name VARCHAR(64) NOT NULL,
+  from_bed_no VARCHAR(32) DEFAULT NULL,
+  to_ward_id BIGINT NOT NULL,
+  to_ward_name VARCHAR(64) NOT NULL,
+  to_bed_no VARCHAR(32) DEFAULT NULL,
+  operator_id BIGINT DEFAULT NULL,
+  operator_name VARCHAR(32) DEFAULT NULL,
+  transfer_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  remark VARCHAR(255) DEFAULT NULL,
+  create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted TINYINT NOT NULL DEFAULT 0,
+  UNIQUE (transfer_no)
 );
 
 -- 门禁出入记录表

@@ -56,4 +56,16 @@ public class CertificateVO implements Serializable {
     private String invalidOperatorName;
 
     private LocalDate idCardExpireDate;
+
+    private Integer certType;
+
+    private Long specialApprovalId;
+
+    private Long currentLeaveId;
+
+    private Integer todayInCount;
+
+    private Integer todayOutCount;
+
+    private Integer isIsolationWard;
 }

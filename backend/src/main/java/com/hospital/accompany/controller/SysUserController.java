@@ -4,15 +4,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.hospital.accompany.common.Result;
 import com.hospital.accompany.entity.SysUser;
 import com.hospital.accompany.mapper.SysUserMapper;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Api(tags = "系统用户")
+@Tag(name = "系统用户")
 @RestController
 @RequestMapping("/user")
 public class SysUserController {
@@ -20,7 +20,7 @@ public class SysUserController {
     @Autowired
     private SysUserMapper sysUserMapper;
 
-    @ApiOperation("用户登录")
+    @Operation(summary = "用户登录")
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody Map<String, String> params) {
         String userName = params.get("userName");
@@ -50,7 +50,7 @@ public class SysUserController {
         return Result.success("登录成功", result);
     }
 
-    @ApiOperation("获取用户信息")
+    @Operation(summary = "获取用户信息")
     @GetMapping("/{id}")
     public Result<SysUser> getUserInfo(@PathVariable Long id) {
         SysUser user = sysUserMapper.selectById(id);

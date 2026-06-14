@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.accompany.mapper.CertLeaveRecordMapper">
+
+    <resultMap id="CertLeaveRecordVOMap" type="com.hospital.accompany.vo.CertLeaveRecordVO">
+        <id column="id" property="id"/>
+        <result column="leave_no" property="leaveNo"/>
+        <result column="cert_id" property="certId"/>
+        <result column="cert_no" property="certNo"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="ward_id" property="wardId"/>
+        <result column="ward_name" property="wardName"/>
+        <result column="person_id" property="personId"/>
+        <result column="person_name" property="personName"/>
+        <result column="leave_type" property="leaveType"/>
+        <result column="leave_time" property="leaveTime"/>
+        <result column="expected_return_time" property="expectedReturnTime"/>
+        <result column="actual_return_time" property="actualReturnTime"/>
+        <result column="leave_status" property="leaveStatus"/>
+        <result column="invalid_reason" property="invalidReason"/>
+        <result column="invalid_time" property="invalidTime"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+    </resultMap>
+
+    <sql id="leaveBaseColumns">
+        lr.id,
+        lr.leave_no,
+        lr.cert_id,
+        lr.cert_no,
+        lr.patient_id,
+        p.patient_name,
+        lr.ward_id,
+        w.ward_name,
+        lr.person_id,
+        lr.person_name,
+        lr.leave_type,
+        lr.leave_time,
+        lr.expected_return_time,
+        lr.actual_return_time,
+        lr.leave_status,
+        lr.invalid_reason,
+        lr.invalid_time,
+        lr.operator_id,
+        lr.operator_name
+    </sql>
+
+    <select id="selectLeavePage" resultMap="CertLeaveRecordVOMap">
+        SELECT
+            <include refid="leaveBaseColumns"/>
+        FROM cert_leave_record lr
+        LEFT JOIN patient p ON lr.patient_id = p.id
+        LEFT JOIN ward w ON lr.ward_id = w.id
+        WHERE lr.deleted = 0
+        <if test="certId != null">
+            AND lr.cert_id = #{certId}
+        </if>
+        <if test="patientId != null">
+            AND lr.patient_id = #{patientId}
+        </if>
+        <if test="wardId != null">
+            AND lr.ward_id = #{wardId}
+        </if>
+        <if test="leaveStatus != null">
+            AND lr.leave_status = #{leaveStatus}
+        </if>
+        <if test="personName != null and personName != ''">
+            AND lr.person_name LIKE CONCAT('%', #{personName}, '%')
+        </if>
+        ORDER BY lr.leave_time DESC
+    </select>
+
+    <select id="getLeaveDetailById" resultMap="CertLeaveRecordVOMap">
+        SELECT
+            <include refid="leaveBaseColumns"/>
+        FROM cert_leave_record lr
+        LEFT JOIN patient p ON lr.patient_id = p.id
+        LEFT JOIN ward w ON lr.ward_id = w.id
+        WHERE lr.deleted = 0 AND lr.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectOverdueLeaveRecords" resultType="com.hospital.accompany.entity.CertLeaveRecord">
+        SELECT * FROM cert_leave_record
+        WHERE deleted = 0
+          AND leave_status = 1
+          AND expected_return_time IS NOT NULL
+          AND expected_return_time &lt; #{now}
+    </select>
+
+</mapper>

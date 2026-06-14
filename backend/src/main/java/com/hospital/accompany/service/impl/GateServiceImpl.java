@@ -39,6 +39,9 @@ public class GateServiceImpl implements GateService {
     @Autowired
     private GateRecordMapper gateRecordMapper;
 
+    @Autowired
+    private CertLeaveRecordMapper leaveRecordMapper;
+
     @Override
     public CertificateVO checkCertificate(String certNoOrIdCard) {
         AccompanyCertificate cert = null;
@@ -54,7 +57,7 @@ public class GateServiceImpl implements GateService {
             if (person != null) {
                 LambdaQueryWrapper<AccompanyCertificate> certByIdCardWrapper = new LambdaQueryWrapper<>();
                 certByIdCardWrapper.eq(AccompanyCertificate::getPersonId, person.getId())
-                        .eq(AccompanyCertificate::getCertStatus, 1)
+                        .in(AccompanyCertificate::getCertStatus, 1, 2)
                         .orderByDesc(AccompanyCertificate::getIssueTime)
                         .last("LIMIT 1");
                 cert = certificateMapper.selectOne(certByIdCardWrapper);
@@ -81,11 +84,17 @@ public class GateServiceImpl implements GateService {
         record.setGateUserName(dto.getGateUserName());
         record.setCheckTime(LocalDateTime.now());
 
-        try {
-            CertificateVO certVO = checkCertificate(dto.getCertNoOrIdCard());
+        CertificateVO certVO = null;
 
-            if (certVO.getCertStatus() != 1) {
+        try {
+            certVO = checkCertificate(dto.getCertNoOrIdCard());
+
+            if (certVO.getCertStatus() == 0) {
                 throw new BusinessException("陪护证已失效");
+            }
+
+            if (certVO.getCertStatus() == 2) {
+                throw new BusinessException("陪护证处于临时离院状态，请先办理返回手续");
             }
 
             LocalDate today = LocalDate.now();
@@ -101,9 +110,16 @@ public class GateServiceImpl implements GateService {
                 throw new BusinessException("身份证已过期，不能入院");
             }
 
+            Patient patient = patientMapper.selectById(certVO.getPatientId());
+            if (patient != null && !patient.getWardId().equals(certVO.getWardId())) {
+                throw new BusinessException("患者已转至其他病区，此陪护证不能在本病区使用");
+            }
+
             Ward ward = wardMapper.selectById(certVO.getWardId());
             if (ward != null && ward.getIsIsolation() == 1) {
-                throw new BusinessException("隔离病区陪护人员禁止出入");
+                if (certVO.getCertType() == null || certVO.getCertType() != 2) {
+                    throw new BusinessException("隔离病区陪护人员禁止出入，需特殊审批陪护证");
+                }
             }
 
             record.setCertId(certVO.getId());
@@ -131,6 +147,7 @@ public class GateServiceImpl implements GateService {
 
         GateRecordVO vo = new GateRecordVO();
         BeanUtils.copyProperties(record, vo);
+        vo.setCertInfo(certVO);
         return vo;
     }
 

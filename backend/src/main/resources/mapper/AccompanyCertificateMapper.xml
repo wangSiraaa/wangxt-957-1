@@ -17,6 +17,9 @@
         <result column="id_card" property="idCard"/>
         <result column="phone" property="phone"/>
         <result column="relation" property="relation"/>
+        <result column="cert_type" property="certType"/>
+        <result column="special_approval_id" property="specialApprovalId"/>
+        <result column="current_leave_id" property="currentLeaveId"/>
         <result column="start_date" property="startDate"/>
         <result column="end_date" property="endDate"/>
         <result column="cert_status" property="certStatus"/>
@@ -26,33 +29,48 @@
         <result column="invalid_time" property="invalidTime"/>
         <result column="invalid_operator_name" property="invalidOperatorName"/>
         <result column="id_card_expire_date" property="idCardExpireDate"/>
+        <result column="is_isolation" property="isIsolationWard"/>
+        <result column="today_in_count" property="todayInCount"/>
+        <result column="today_out_count" property="todayOutCount"/>
     </resultMap>
+
+    <sql id="certBaseColumns">
+        c.id,
+        c.cert_no,
+        c.apply_id,
+        c.patient_id,
+        p.patient_name,
+        p.patient_no,
+        p.bed_no,
+        c.ward_id,
+        w.ward_name,
+        c.person_id,
+        ap.person_name,
+        ap.id_card,
+        ap.phone,
+        ap.relation,
+        c.cert_type,
+        c.special_approval_id,
+        c.current_leave_id,
+        c.start_date,
+        c.end_date,
+        c.cert_status,
+        c.issue_user_name,
+        c.issue_time,
+        c.invalid_reason,
+        c.invalid_time,
+        c.invalid_operator_name,
+        ap.id_card_expire_date,
+        w.is_isolation
+    </sql>
 
     <select id="getCertificateDetailById" resultMap="CertificateVOMap">
         SELECT
-            c.id,
-            c.cert_no,
-            c.apply_id,
-            c.patient_id,
-            p.patient_name,
-            p.patient_no,
-            p.bed_no,
-            c.ward_id,
-            w.ward_name,
-            c.person_id,
-            ap.person_name,
-            ap.id_card,
-            ap.phone,
-            ap.relation,
-            c.start_date,
-            c.end_date,
-            c.cert_status,
-            c.issue_user_name,
-            c.issue_time,
-            c.invalid_reason,
-            c.invalid_time,
-            c.invalid_operator_name,
-            ap.id_card_expire_date
+            <include refid="certBaseColumns"/>,
+            (SELECT COUNT(*) FROM gate_record gr WHERE gr.cert_id = c.id AND gr.deleted = 0 AND gr.gate_type = 1 AND gr.check_result = 1
+                AND DATE(gr.check_time) = CURDATE()) AS today_in_count,
+            (SELECT COUNT(*) FROM gate_record gr WHERE gr.cert_id = c.id AND gr.deleted = 0 AND gr.gate_type = 2 AND gr.check_result = 1
+                AND DATE(gr.check_time) = CURDATE()) AS today_out_count
         FROM accompany_certificate c
         LEFT JOIN patient p ON c.patient_id = p.id
         LEFT JOIN ward w ON c.ward_id = w.id
@@ -63,29 +81,11 @@
 
     <select id="getCertificateByNo" resultMap="CertificateVOMap">
         SELECT
-            c.id,
-            c.cert_no,
-            c.apply_id,
-            c.patient_id,
-            p.patient_name,
-            p.patient_no,
-            p.bed_no,
-            c.ward_id,
-            w.ward_name,
-            c.person_id,
-            ap.person_name,
-            ap.id_card,
-            ap.phone,
-            ap.relation,
-            c.start_date,
-            c.end_date,
-            c.cert_status,
-            c.issue_user_name,
-            c.issue_time,
-            c.invalid_reason,
-            c.invalid_time,
-            c.invalid_operator_name,
-            ap.id_card_expire_date
+            <include refid="certBaseColumns"/>,
+            (SELECT COUNT(*) FROM gate_record gr WHERE gr.cert_id = c.id AND gr.deleted = 0 AND gr.gate_type = 1 AND gr.check_result = 1
+                AND DATE(gr.check_time) = CURDATE()) AS today_in_count,
+            (SELECT COUNT(*) FROM gate_record gr WHERE gr.cert_id = c.id AND gr.deleted = 0 AND gr.gate_type = 2 AND gr.check_result = 1
+                AND DATE(gr.check_time) = CURDATE()) AS today_out_count
         FROM accompany_certificate c
         LEFT JOIN patient p ON c.patient_id = p.id
         LEFT JOIN ward w ON c.ward_id = w.id
@@ -97,29 +97,9 @@
 
     <select id="selectCertificatePage" resultMap="CertificateVOMap">
         SELECT
-            c.id,
-            c.cert_no,
-            c.apply_id,
-            c.patient_id,
-            p.patient_name,
-            p.patient_no,
-            p.bed_no,
-            c.ward_id,
-            w.ward_name,
-            c.person_id,
-            ap.person_name,
-            ap.id_card,
-            ap.phone,
-            ap.relation,
-            c.start_date,
-            c.end_date,
-            c.cert_status,
-            c.issue_user_name,
-            c.issue_time,
-            c.invalid_reason,
-            c.invalid_time,
-            c.invalid_operator_name,
-            ap.id_card_expire_date
+            <include refid="certBaseColumns"/>,
+            0 AS today_in_count,
+            0 AS today_out_count
         FROM accompany_certificate c
         LEFT JOIN patient p ON c.patient_id = p.id
         LEFT JOIN ward w ON c.ward_id = w.id
@@ -141,6 +121,11 @@
             AND c.cert_no LIKE CONCAT('%', #{certNo}, '%')
         </if>
         ORDER BY c.issue_time DESC
+    </select>
+
+    <select id="countValidByPatientId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM accompany_certificate
+        WHERE deleted = 0 AND patient_id = #{patientId} AND cert_status = 1
     </select>
 
 </mapper>

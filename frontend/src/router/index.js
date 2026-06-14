@@ -54,6 +54,36 @@ const routes = [
         name: 'CertificateInvalid',
         component: () => import('@/views/certificate/CertificateInvalid.vue'),
         meta: { title: '失效管理' }
+      },
+      {
+        path: 'certificate/transfer',
+        name: 'TransferCompanion',
+        component: () => import('@/views/certificate/TransferCompanion.vue'),
+        meta: { title: '换陪护管理', icon: 'Switch' }
+      },
+      {
+        path: 'certificate/leave',
+        name: 'LeaveManagement',
+        component: () => import('@/views/certificate/LeaveManagement.vue'),
+        meta: { title: '临时离院管理', icon: 'Position' }
+      },
+      {
+        path: 'patient/transfer',
+        name: 'WardTransfer',
+        component: () => import('@/views/patient/WardTransfer.vue'),
+        meta: { title: '病区转床', icon: 'Sort' }
+      },
+      {
+        path: 'special-approval',
+        name: 'SpecialApproval',
+        component: () => import('@/views/audit/SpecialApprovalList.vue'),
+        meta: { title: '特殊审批', icon: 'Stamp' }
+      },
+      {
+        path: 'accompany-config',
+        name: 'AccompanyConfig',
+        component: () => import('@/views/ward/AccompanyConfig.vue'),
+        meta: { title: '陪护人数配置', icon: 'Setting' }
       }
     ]
   }

@@ -31,6 +31,26 @@
           <el-icon><CircleClose /></el-icon>
           <span>失效管理</span>
         </el-menu-item>
+        <el-menu-item index="/certificate/transfer">
+          <el-icon><Sort /></el-icon>
+          <span>换陪护管理</span>
+        </el-menu-item>
+        <el-menu-item index="/certificate/leave">
+          <el-icon><Position /></el-icon>
+          <span>临时离院</span>
+        </el-menu-item>
+        <el-menu-item index="/patient/transfer">
+          <el-icon><Right /></el-icon>
+          <span>病区转床</span>
+        </el-menu-item>
+        <el-menu-item index="/special-approval">
+          <el-icon><Stamp /></el-icon>
+          <span>特殊审批</span>
+        </el-menu-item>
+        <el-menu-item index="/accompany-config">
+          <el-icon><Setting /></el-icon>
+          <span>陪护人数配置</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

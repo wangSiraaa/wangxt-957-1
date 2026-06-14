@@ -42,19 +42,33 @@
         <div v-if="certInfo" class="cert-info">
           <el-descriptions :column="2" border title="陪护证信息">
             <el-descriptions-item label="证件编号">{{ certInfo.certNo }}</el-descriptions-item>
+            <el-descriptions-item label="证件类型">
+              <el-tag :type="certInfo.certType === 2 ? 'warning' : 'primary'">
+                {{ certInfo.certType === 2 ? '特殊审批' : '普通陪护' }}
+              </el-tag>
+            </el-descriptions-item>
             <el-descriptions-item label="证件状态">
-              <el-tag :type="certInfo.certStatus === 1 ? 'success' : 'info'">
-                {{ certInfo.certStatus === 1 ? '有效' : '已失效' }}
+              <el-tag :type="certInfo.certStatus === 1 ? 'success' : certInfo.certStatus === 2 ? 'warning' : 'info'">
+                {{ certInfo.certStatus === 1 ? '有效' : certInfo.certStatus === 2 ? '临时离院' : '已失效' }}
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="陪护人员">{{ certInfo.personName }}</el-descriptions-item>
             <el-descriptions-item label="身份证号">{{ certInfo.idCard }}</el-descriptions-item>
             <el-descriptions-item label="患者姓名">{{ certInfo.patientName }}</el-descriptions-item>
             <el-descriptions-item label="住院号">{{ certInfo.patientNo }}</el-descriptions-item>
-            <el-descriptions-item label="病区">{{ certInfo.wardName }}</el-descriptions-item>
+            <el-descriptions-item label="病区">
+              {{ certInfo.wardName }}
+              <el-tag v-if="certInfo.isIsolationWard" type="danger" size="small" style="margin-left:6px">隔离病区</el-tag>
+            </el-descriptions-item>
             <el-descriptions-item label="床号">{{ certInfo.bedNo }}</el-descriptions-item>
             <el-descriptions-item label="有效期开始">{{ certInfo.startDate }}</el-descriptions-item>
             <el-descriptions-item label="有效期结束">{{ certInfo.endDate }}</el-descriptions-item>
+            <el-descriptions-item label="当天入院次数">
+              <el-tag type="info">{{ certInfo.todayInCount ?? 0 }} 次</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="当天出院次数">
+              <el-tag type="info">{{ certInfo.todayOutCount ?? 0 }} 次</el-tag>
+            </el-descriptions-item>
             <el-descriptions-item label="发证时间">{{ certInfo.issueTime }}</el-descriptions-item>
             <el-descriptions-item label="发证人员">{{ certInfo.issueUserName }}</el-descriptions-item>
           </el-descriptions>
@@ -111,7 +125,7 @@ const handleCheck = async () => {
     })
 
     checkResult.value = res.data
-    certInfo.value = null
+    certInfo.value = res.data.certInfo || null
 
     if (res.data.checkResult === 1) {
       ElMessage.success(gateType.value === 1 ? '入院查验通过' : '出院查验通过')

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hospital.accompany.mapper.PatientTransferRecordMapper">
+
+    <resultMap id="PatientTransferRecordVOMap" type="com.hospital.accompany.vo.PatientTransferRecordVO">
+        <id column="id" property="id"/>
+        <result column="transfer_no" property="transferNo"/>
+        <result column="patient_id" property="patientId"/>
+        <result column="patient_name" property="patientName"/>
+        <result column="patient_no" property="patientNo"/>
+        <result column="from_ward_id" property="fromWardId"/>
+        <result column="from_ward_name" property="fromWardName"/>
+        <result column="from_bed_no" property="fromBedNo"/>
+        <result column="to_ward_id" property="toWardId"/>
+        <result column="to_ward_name" property="toWardName"/>
+        <result column="to_bed_no" property="toBedNo"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="transfer_time" property="transferTime"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="selectTransferPage" resultMap="PatientTransferRecordVOMap">
+        SELECT
+            ptr.id,
+            ptr.transfer_no,
+            ptr.patient_id,
+            ptr.patient_name,
+            p.patient_no,
+            ptr.from_ward_id,
+            ptr.from_ward_name,
+            ptr.from_bed_no,
+            ptr.to_ward_id,
+            ptr.to_ward_name,
+            ptr.to_bed_no,
+            ptr.operator_id,
+            ptr.operator_name,
+            ptr.transfer_time,
+            ptr.remark
+        FROM patient_transfer_record ptr
+        LEFT JOIN patient p ON ptr.patient_id = p.id
+        WHERE ptr.deleted = 0
+        <if test="patientId != null">
+            AND ptr.patient_id = #{patientId}
+        </if>
+        <if test="fromWardId != null">
+            AND ptr.from_ward_id = #{fromWardId}
+        </if>
+        <if test="toWardId != null">
+            AND ptr.to_ward_id = #{toWardId}
+        </if>
+        <if test="patientName != null and patientName != ''">
+            AND ptr.patient_name LIKE CONCAT('%', #{patientName}, '%')
+        </if>
+        ORDER BY ptr.transfer_time DESC
+    </select>
+
+    <select id="getTransferDetailById" resultMap="PatientTransferRecordVOMap">
+        SELECT
+            ptr.id,
+            ptr.transfer_no,
+            ptr.patient_id,
+            ptr.patient_name,
+            p.patient_no,
+            ptr.from_ward_id,
+            ptr.from_ward_name,
+            ptr.from_bed_no,
+            ptr.to_ward_id,
+            ptr.to_ward_name,
+            ptr.to_bed_no,
+            ptr.operator_id,
+            ptr.operator_name,
+            ptr.transfer_time,
+            ptr.remark
+        FROM patient_transfer_record ptr
+        LEFT JOIN patient p ON ptr.patient_id = p.id
+        WHERE ptr.deleted = 0 AND ptr.id = #{id}
+        LIMIT 1
+    </select>
+
+</mapper>

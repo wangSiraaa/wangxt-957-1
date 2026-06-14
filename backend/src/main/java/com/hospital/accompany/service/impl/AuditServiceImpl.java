@@ -35,6 +35,12 @@ public class AuditServiceImpl implements AuditService {
     @Autowired
     private SysUserMapper sysUserMapper;
 
+    @Autowired
+    private CertTransferRecordMapper transferRecordMapper;
+
+    @Autowired
+    private WardPatientConfigMapper configMapper;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ApplyVO auditApply(AuditDTO dto) {
@@ -57,13 +63,21 @@ public class AuditServiceImpl implements AuditService {
             Patient patient = patientMapper.selectById(apply.getPatientId());
             Ward ward = wardMapper.selectById(apply.getWardId());
 
-            if (ward.getIsIsolation() == 1) {
-                throw new BusinessException("隔离病区不能新增陪护");
+            if (ward.getIsIsolation() == 1 && apply.getApplyType() != 3) {
+                throw new BusinessException("隔离病区不能新增普通陪护");
+            }
+
+            int maxCount = ward.getMaxAccompanyPerBed();
+            WardPatientConfig config = configMapper.selectOne(
+                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<WardPatientConfig>()
+                            .eq(WardPatientConfig::getPatientId, apply.getPatientId()));
+            if (config != null) {
+                maxCount = config.getMaxAccompanyCount();
             }
 
             Integer validCount = certificateMapper.countValidByPatientId(apply.getPatientId());
-            if (validCount >= ward.getMaxAccompanyPerBed()) {
-                throw new BusinessException("陪护人数已超过床位限制");
+            if (validCount >= maxCount) {
+                throw new BusinessException("陪护人数已超过限制（上限" + maxCount + "人）");
             }
 
             AccompanyCertificate cert = new AccompanyCertificate();
@@ -80,7 +94,53 @@ public class AuditServiceImpl implements AuditService {
             cert.setIssueUserId(dto.getAuditUserId());
             cert.setIssueUserName(dto.getAuditUserName());
             cert.setIssueTime(LocalDateTime.now());
+
+            if (apply.getApplyType() == 3 && apply.getSpecialApprovalId() != null) {
+                cert.setCertType(2);
+                cert.setSpecialApprovalId(apply.getSpecialApprovalId());
+            } else {
+                cert.setCertType(1);
+            }
+
             certificateMapper.insert(cert);
+
+            if (apply.getApplyType() == 2 && apply.getSourceCertId() != null) {
+                AccompanyCertificate oldCert = certificateMapper.selectById(apply.getSourceCertId());
+                if (oldCert != null && oldCert.getCertStatus() != 0) {
+                    oldCert.setCertStatus(0);
+                    oldCert.setInvalidReason("换陪护，原证注销");
+                    oldCert.setInvalidTime(LocalDateTime.now());
+                    oldCert.setInvalidOperatorId(dto.getAuditUserId());
+                    oldCert.setInvalidOperatorName(dto.getAuditUserName());
+                    certificateMapper.updateById(oldCert);
+                }
+
+                if (apply.getTransferRecordId() != null) {
+                    CertTransferRecord transferRecord = transferRecordMapper.selectById(apply.getTransferRecordId());
+                    if (transferRecord != null) {
+                        transferRecord.setNewCertId(cert.getId());
+                        transferRecord.setNewCertNo(cert.getCertNo());
+                        transferRecord.setNewApplyStatus(1);
+                        transferRecord.setNewAuditUserId(dto.getAuditUserId());
+                        transferRecord.setNewAuditUserName(dto.getAuditUserName());
+                        transferRecord.setNewAuditTime(LocalDateTime.now());
+                        transferRecord.setNewAuditRemark(dto.getAuditRemark());
+                        transferRecordMapper.updateById(transferRecord);
+                    }
+                }
+            }
+        } else {
+            if (apply.getApplyType() == 2 && apply.getTransferRecordId() != null) {
+                CertTransferRecord transferRecord = transferRecordMapper.selectById(apply.getTransferRecordId());
+                if (transferRecord != null) {
+                    transferRecord.setNewApplyStatus(2);
+                    transferRecord.setNewAuditUserId(dto.getAuditUserId());
+                    transferRecord.setNewAuditUserName(dto.getAuditUserName());
+                    transferRecord.setNewAuditTime(LocalDateTime.now());
+                    transferRecord.setNewAuditRemark(dto.getAuditRemark());
+                    transferRecordMapper.updateById(transferRecord);
+                }
+            }
         }
 
         return getApplyDetail(apply.getId());

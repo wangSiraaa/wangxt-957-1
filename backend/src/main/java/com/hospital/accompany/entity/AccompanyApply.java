@@ -24,6 +24,14 @@ public class AccompanyApply implements Serializable {
 
     private Long personId;
 
+    private Integer applyType;
+
+    private Long sourceCertId;
+
+    private Long transferRecordId;
+
+    private Long specialApprovalId;
+
     private String applyReason;
 
     private LocalDate expectedStartDate;
