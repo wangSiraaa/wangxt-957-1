@@ -42,4 +42,6 @@ public class ApplySubmitDTO implements Serializable {
 
     @NotNull(message = "预计结束日期不能为空")
     private LocalDate expectedEndDate;
+
+    private Integer applyType;
 }

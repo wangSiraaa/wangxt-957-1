@@ -37,6 +37,9 @@ public class AccompanyApplyServiceImpl extends ServiceImpl<AccompanyApplyMapper,
     @Autowired
     private AccompanyCertificateMapper certificateMapper;
 
+    @Autowired
+    private WardPatientConfigMapper configMapper;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String submitApply(ApplySubmitDTO dto) {
@@ -51,7 +54,9 @@ public class AccompanyApplyServiceImpl extends ServiceImpl<AccompanyApplyMapper,
         }
 
         if (ward.getIsIsolation() == 1) {
-            throw new BusinessException("隔离病区不能新增陪护");
+            if (dto.getApplyType() == null || dto.getApplyType() != 3) {
+                throw new BusinessException("隔离病区不能新增普通陪护");
+            }
         }
 
         if (dto.getExpectedEndDate().isBefore(dto.getExpectedStartDate())) {
@@ -62,9 +67,17 @@ public class AccompanyApplyServiceImpl extends ServiceImpl<AccompanyApplyMapper,
             throw new BusinessException("身份证已过期，不能申请陪护");
         }
 
+        int maxCount = ward.getMaxAccompanyPerBed();
+        WardPatientConfig config = configMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<WardPatientConfig>()
+                        .eq(WardPatientConfig::getPatientId, dto.getPatientId()));
+        if (config != null) {
+            maxCount = config.getMaxAccompanyCount();
+        }
+
         Integer validCount = certificateMapper.countValidByPatientId(dto.getPatientId());
-        if (validCount >= ward.getMaxAccompanyPerBed()) {
-            throw new BusinessException("陪护人数已超过床位限制，不能新增陪护");
+        if (validCount >= maxCount) {
+            throw new BusinessException("陪护人数已超过限制（上限" + maxCount + "人），不能新增陪护");
         }
 
         LambdaQueryWrapper<AccompanyPerson> personWrapper = new LambdaQueryWrapper<>();
@@ -97,6 +110,7 @@ public class AccompanyApplyServiceImpl extends ServiceImpl<AccompanyApplyMapper,
         apply.setPatientId(dto.getPatientId());
         apply.setWardId(patient.getWardId());
         apply.setPersonId(person.getId());
+        apply.setApplyType(dto.getApplyType() != null ? dto.getApplyType() : 1);
         apply.setApplyReason(dto.getApplyReason());
         apply.setExpectedStartDate(dto.getExpectedStartDate());
         apply.setExpectedEndDate(dto.getExpectedEndDate());

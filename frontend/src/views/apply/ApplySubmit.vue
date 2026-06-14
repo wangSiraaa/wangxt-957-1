@@ -1,7 +1,7 @@
 <template>
   <div class="page-container">
     <div class="page-header">
-      <div class="page-title">提交陪护申请</div>
+      <div class="page-title">{{ applyType === 3 ? '特殊审批陪护申请' : '提交陪护申请' }}</div>
       <el-button @click="goBack">
         <el-icon><ArrowLeft /></el-icon>
         返回
@@ -39,7 +39,8 @@
           <el-descriptions-item label="诊断">{{ selectedPatient.diagnosis }}</el-descriptions-item>
           <el-descriptions-item label="入院日期">{{ selectedPatient.admissionDate }}</el-descriptions-item>
         </el-descriptions>
-        <el-alert v-if="wardInfo?.isIsolation" title="隔离病区不能新增陪护" type="error" show-icon style="margin-top: 10px" />
+        <el-alert v-if="wardInfo?.isIsolation && applyType !== 3" title="隔离病区不能新增普通陪护" type="error" show-icon style="margin-top: 10px" />
+        <el-alert v-if="wardInfo?.isIsolation && applyType === 3" title="隔离病区特殊审批陪护申请" type="warning" show-icon style="margin-top: 10px" />
       </div>
 
       <el-divider content-position="left">陪护人员信息</el-divider>
@@ -116,20 +117,22 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { submitApply } from '@/api/apply'
 import { getPatientPage } from '@/api/patient'
 import { getWardList } from '@/api/ward'
 
 const router = useRouter()
+const route = useRoute()
 const formRef = ref(null)
 const submitting = ref(false)
 const patientList = ref([])
 const selectedPatient = ref(null)
 const wardInfo = ref(null)
 const wardList = ref([])
+const applyType = ref(1)
 
 const form = reactive({
   patientId: null,
@@ -142,7 +145,16 @@ const form = reactive({
   address: '',
   applyReason: '',
   expectedStartDate: null,
-  expectedEndDate: null
+  expectedEndDate: null,
+  applyType: 1
+})
+
+onMounted(() => {
+  const type = parseInt(route.query.type)
+  if (type === 3) {
+    applyType.value = 3
+    form.applyType = 3
+  }
 })
 
 const rules = {
@@ -188,8 +200,8 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate()
 
-    if (wardInfo.value?.isIsolation) {
-      ElMessage.error('隔离病区不能新增陪护')
+    if (wardInfo.value?.isIsolation && applyType.value !== 3) {
+      ElMessage.error('隔离病区不能新增普通陪护')
       return
     }
 

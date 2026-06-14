@@ -36,6 +36,12 @@ public class SpecialApprovalServiceImpl implements SpecialApprovalService {
     @Autowired
     private AccompanyCertificateMapper certificateMapper;
 
+    @Autowired
+    private AccompanyApplyMapper applyMapper;
+
+    @Autowired
+    private WardPatientConfigMapper configMapper;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SpecialApprovalVO submitSpecialApproval(SpecialApprovalDTO dto) {
@@ -103,6 +109,22 @@ public class SpecialApprovalServiceImpl implements SpecialApprovalService {
         specialApprovalMapper.updateById(approval);
 
         if (dto.getAuditResult() == 1) {
+            Patient patient = patientMapper.selectById(approval.getPatientId());
+            Ward ward = wardMapper.selectById(approval.getWardId());
+
+            int maxCount = ward.getMaxAccompanyPerBed();
+            WardPatientConfig config = configMapper.selectOne(
+                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<WardPatientConfig>()
+                            .eq(WardPatientConfig::getPatientId, approval.getPatientId()));
+            if (config != null) {
+                maxCount = config.getMaxAccompanyCount();
+            }
+
+            Integer validCount = certificateMapper.countValidByPatientId(approval.getPatientId());
+            if (validCount >= maxCount) {
+                throw new BusinessException("陪护人数已超过限制（上限" + maxCount + "人）");
+            }
+
             AccompanyCertificate cert = new AccompanyCertificate();
             String certNo = "PHZ" + DateUtil.format(LocalDateTime.now(), "yyyyMMdd") +
                     String.format("%06d", IdUtil.getSnowflakeNextId() % 1000000);
@@ -145,9 +167,6 @@ public class SpecialApprovalServiceImpl implements SpecialApprovalService {
 
         return specialApprovalMapper.getApprovalDetailById(approval.getId());
     }
-
-    @Autowired
-    private AccompanyApplyMapper applyMapper;
 
     @Override
     public PageResult<SpecialApprovalVO> getApprovalPage(Long current, Long size, Long wardId,
