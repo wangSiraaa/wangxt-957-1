@@ -7,16 +7,25 @@ spring:
   application:
     name: accompany-system
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:accompany_db}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:123456}
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:accompany_db;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/init-h2.sql
+      data-locations: classpath:sql/data-h2.sql
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
